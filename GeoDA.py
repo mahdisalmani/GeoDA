@@ -21,7 +21,7 @@ from torch.autograd import Variable
 from numpy import linalg 
 import foolbox 
 import math
-import generate_2d_dct_basis
+from generate_2d_dct_basis import generate_2d_dct_basis
 import time
 
 ###############################################################
