@@ -520,7 +520,7 @@ else:
     
     label_boundary = torch.argmax(net.forward(Variable(x_boundary, requires_grad=True)).data).item()
     
-    query_rnd = query_binsearch_2 + query_random_1
+    query_rnd = query_binsearch_2
     
 
 
