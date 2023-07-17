@@ -303,7 +303,9 @@ def GeoDA(x_b, iteration, q_opt, q_num=0):
     
     norms = []
     grad = 0
-    logs = np.zeros((2, iteration))
+    logs = np.zeros((2, iteration+1))
+    logs[0][0] = 0
+    logs[1][0] = linalg.norm(inv_tf(x_b.cpu().numpy()[0,:,:,:].squeeze(), mean, std)-image_fb)
     
     for i in range(iteration):
     
@@ -339,8 +341,8 @@ def GeoDA(x_b, iteration, q_opt, q_num=0):
             message = ' (took {:.5f} seconds)'.format(t2 - t1)
             print('iteration -> ' + str(i) + str(message) + '     -- ' + dp + ' norm is -> ' + str(norm_p))
 
-        logs[0][i] = q_num
-        logs[1][i] = norm_p
+        logs[0][i+1] = q_num
+        logs[1][i+1] = norm_p
         
         
     x_adv = clip_image_values(x_adv, lb, ub)
