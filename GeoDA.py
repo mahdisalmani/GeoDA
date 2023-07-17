@@ -51,10 +51,10 @@ sigma = 0.0002
 mu = 0.6
 
 
-#dist = 'l2'
-dist = 'linf'
-dist = 'l1'
-dist = 'linf'
+dist = 'l2'
+# dist = 'linf'
+# dist = 'l1'
+# dist = 'linf'
 search_space = 'sub'
 
 
