@@ -23,12 +23,36 @@ import foolbox
 import math
 from generate_2d_dct_basis import generate_2d_dct_basis
 import time
+import argparse
 
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--max_queries',
+        type=int,
+        default=1000,
+        help='The max number of queries in model'
+    )
+    parser.add_argument(
+        "--image_num",
+        type=int,
+        default=64,
+        help="The index of the desired image"
+    )
+    parser.add_argument(
+        "--image_name",
+        type=str,
+        default="00000064",
+        help="The index of the desired image"
+    )
+    return parser.parse_args()
 ###############################################################
 ###############################################################
 
 # Parameters 
 
+args = get_args()
 
 grad_estimator_batch_size = 40     # batch size for GeoDA
 
@@ -38,7 +62,7 @@ verbose_control = 'Yes'
 
 
 
-Q_max = 4000
+Q_max = args.max_queries
 
 torch.manual_seed(992)
 torch.cuda.manual_seed(992)
@@ -62,8 +86,8 @@ search_space = 'sub'
 image_iter = 0
 
 
-image_num = 64
-inp = "./data/ILSVRC2012_val_000000" + str(image_num) + ".JPEG"
+image_num = args.image_num
+inp = "./data/ILSVRC2012_val_" + str(args.image_name) + ".JPEG"
 
 
 
