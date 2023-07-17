@@ -24,6 +24,7 @@ import math
 from generate_2d_dct_basis import generate_2d_dct_basis
 import time
 import argparse
+import pandas as pd
 
 
 def get_args():
