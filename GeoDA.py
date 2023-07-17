@@ -47,6 +47,21 @@ def get_args():
         help="The index of the desired image"
     )
     return parser.parse_args()
+
+def save_results(logs):
+    numpy_results = np.full((2, args.max_queries), np.nan) 
+    for i, my_intermediate in enumerate(logs):
+        length = len(my_intermediate)
+        for j in range(length):
+            numpy_results[0][j] = logs[0][j]
+            numpy_results[1][j] = logs[1][j]
+    pandas_results = pd.DataFrame(numpy_results)
+    try:
+        df = pd.read_csv('results.csv')
+        df.append(pandas_results)
+        df.to_csv('results.csv')
+    except: 
+        pandas_results.to_csv('results.csv')
 ###############################################################
 ###############################################################
 
@@ -282,12 +297,12 @@ def go_to_boundary(x_0, grad, x_b):
     return perturbed, num_calls, epsilon*num_calls 
 
 ###############################################################
-def GeoDA(x_b, iteration, q_opt):
+def GeoDA(x_b, iteration, q_opt, q_num=0):
     
-   
+    
     norms = []
-    q_num = 0
     grad = 0
+    logs = np.zeros((2, iteration))
     
     for i in range(iteration):
     
@@ -322,11 +337,14 @@ def GeoDA(x_b, iteration, q_opt):
         if verbose_control == 'Yes':
             message = ' (took {:.5f} seconds)'.format(t2 - t1)
             print('iteration -> ' + str(i) + str(message) + '     -- ' + dp + ' norm is -> ' + str(norm_p))
+
+        logs[0][i] = q_num
+        logs[1][i] = norm_p
         
         
     x_adv = clip_image_values(x_adv, lb, ub)
         
-    return x_adv, q_num, grad
+    return x_adv, q_num, grad, logs
 
 
 
@@ -566,13 +584,14 @@ else:
 
 
     t3 = time.time()
-    x_adv, query_o, gradient = GeoDA(x_b, iterate, q_opt_iter)
+    x_adv, query_o, gradient, logs = GeoDA(x_b, iterate, q_opt_iter, query_rnd)
     t4 = time.time()
     message = ' took {:.5f} seconds'.format(t4 - t3)
-    qmessage = ' with query = ' + str(query_o + query_rnd)
+    qmessage = ' with query = ' + str(query_o)
 
     x_opt_inverse = inv_tf(x_adv.cpu().numpy()[0,:,:,:].squeeze(), mean, std)
     norm_inv_opt = linalg.norm(x_opt_inverse-image_fb)
+    save_results(logs)
 
 
     
