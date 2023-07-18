@@ -56,12 +56,13 @@ def save_results(logs):
         for j in range(length):
             numpy_results[0][j] = logs[0][j]
             numpy_results[1][j] = logs[1][j]
-    pandas_results = pd.DataFrame(numpy_results)
     try:
-        df = pd.read_csv('results.csv')
-        df.append(pandas_results)
+        df = pd.read_csv('results.csv', index_col=[0])
+        df = df.append(pd.Series(numpy_results[0], index=df.columns[:len(numpy_results[0])]), ignore_index=True)
+        df = df.append(pd.Series(numpy_results[1], index=df.columns[:len(numpy_results[1])]), ignore_index=True)
         df.to_csv('results.csv')
     except: 
+        pandas_results = pd.DataFrame(numpy_results)
         pandas_results.to_csv('results.csv')
 ###############################################################
 ###############################################################
