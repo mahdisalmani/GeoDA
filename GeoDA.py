@@ -500,7 +500,7 @@ x_0_np = x_0.cpu().numpy()
 
 orig_label = torch.argmax(net.forward(Variable(x_0, requires_grad=True)).data).item()
 labels = open(os.path.join('synset_words.txt'), 'r').read().split('\n')
-str_label_orig = get_label(labels[np.int(orig_label)].split(',')[0])
+str_label_orig = get_label(labels[int(orig_label)].split(',')[0])
 
 ground_truth  = open(os.path.join('val.txt'), 'r').read().split('\n')
 
@@ -513,9 +513,9 @@ ground_label =  ground_name_label.split()[1]
 ground_label_int = int(ground_label)
     
 
-str_label_ground = get_label(labels[np.int(ground_label)].split(',')[0])
+str_label_ground = get_label(labels[int(ground_label)].split(',')[0])
 label_HSJA = np.argmax(fmodel.forward_one(image_fb_first))
-str_HSJA_ground = get_label(labels[np.int(label_HSJA)].split(',')[0])
+str_HSJA_ground = get_label(labels[int(label_HSJA)].split(',')[0])
 
     
 
@@ -670,7 +670,7 @@ else:
         sparse_01 = inv_tf(perturbed_clip.cpu().numpy()[0,:,:,:].squeeze(), mean, std)
         
         adv_label = torch.argmax(net.forward(Variable(perturbed_clip, requires_grad=True)).data).item()
-        str_label_adv = get_label(labels[np.int(adv_label)].split(',')[0])
+        str_label_adv = get_label(labels[int(adv_label)].split(',')[0])
          
         np.count_nonzero(abs(sparse_01-image_fb))
         np.count_nonzero(abs((x_0-perturbed_clip).cpu().numpy()))
@@ -716,7 +716,7 @@ else:
 
     if dist == 'l2' or dist == 'linf':
         adv_label = torch.argmax(net.forward(Variable(x_adv, requires_grad=True)).data).item()
-        str_label_adv = get_label(labels[np.int(adv_label)].split(',')[0])
+        str_label_adv = get_label(labels[int(adv_label)].split(',')[0])
     
     
     

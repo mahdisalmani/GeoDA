@@ -13,7 +13,7 @@ def clip_image_values(x, minv, maxv):
 def valid_bounds(img, delta=255):
 
     im = copy.deepcopy(np.asarray(img))
-    im = im.astype(np.int)
+    im = im.astype(int)
 
     # General valid bounds [0, 255]
     valid_lb = np.zeros_like(im)
