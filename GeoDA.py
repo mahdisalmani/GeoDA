@@ -444,8 +444,7 @@ if torch.cuda.is_available():
     resnet50 = resnet50.cuda()
 meanfb = np.array([0.485, 0.456, 0.406]).reshape((3, 1, 1))
 stdfb = np.array([0.229, 0.224, 0.225]).reshape((3, 1, 1))
-fmodel = foolbox.models.PyTorchModel(
-    resnet50, bounds=(0, 1), num_classes=1000, preprocessing=(meanfb, stdfb))
+
 
 
 
@@ -514,8 +513,6 @@ ground_label_int = int(ground_label)
     
 
 str_label_ground = get_label(labels[int(ground_label)].split(',')[0])
-label_HSJA = np.argmax(fmodel.forward_one(image_fb_first))
-str_HSJA_ground = get_label(labels[int(label_HSJA)].split(',')[0])
 
     
 
