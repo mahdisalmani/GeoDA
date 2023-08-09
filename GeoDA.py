@@ -322,6 +322,7 @@ def GeoDA(x_b, iteration, q_opt, q_num=0):
 
 
         q_num = q_num + bin_query
+        print(q_num)
 
         x_b = x_adv
         
