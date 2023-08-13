@@ -93,7 +93,7 @@ np.random.seed(992)
 
 sub_dim=75
 
-tol = 0.001
+tol = 0.0001
 sigma = 0.0002
 mu = args.mu
 
