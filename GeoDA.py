@@ -47,6 +47,12 @@ def get_args():
         default="00000064",
         help="The index of the desired image"
     )
+    parser.add_argument(
+        "--mu",
+        type=float,
+        default=0.6,
+        help="mu"
+    )
     return parser.parse_args()
 
 def save_results(logs):
@@ -89,7 +95,7 @@ sub_dim=75
 
 tol = 0.001
 sigma = 0.0002
-mu = 0.6
+mu = args.mu
 
 
 dist = 'l2'
