@@ -19,7 +19,6 @@ from utils import valid_bounds, clip_image_values
 from PIL import Image
 from torch.autograd import Variable
 from numpy import linalg 
-import foolbox 
 import math
 from generate_2d_dct_basis import generate_2d_dct_basis
 import time
@@ -53,6 +52,12 @@ def get_args():
         default=0.6,
         help="mu"
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="seed"
+    )
     return parser.parse_args()
 
 def save_results(logs):
@@ -63,13 +68,13 @@ def save_results(logs):
             numpy_results[0][j] = logs[0][j]
             numpy_results[1][j] = logs[1][j]
     try:
-        df = pd.read_csv('results.csv', index_col=[0])
+        df = pd.read_csv(f'{args.seed}_results.csv', index_col=[0])
         df = df.append(pd.Series(numpy_results[0], index=df.columns[:len(numpy_results[0])]), ignore_index=True)
         df = df.append(pd.Series(numpy_results[1], index=df.columns[:len(numpy_results[1])]), ignore_index=True)
-        df.to_csv('results.csv')
+        df.to_csv(f'{args.seed}_results.csv')
     except: 
         pandas_results = pd.DataFrame(numpy_results)
-        pandas_results.to_csv('results.csv')
+        pandas_results.to_csv(f'{args.seed}_results.csv')
 ###############################################################
 ###############################################################
 
@@ -87,9 +92,9 @@ verbose_control = 'Yes'
 
 Q_max = args.max_queries
 
-torch.manual_seed(992)
-torch.cuda.manual_seed(992)
-np.random.seed(992)
+torch.manual_seed(args.seed)
+torch.cuda.manual_seed(args.seed)
+np.random.seed(args.seed)
 
 sub_dim=75
 
@@ -133,40 +138,6 @@ def inv_tf(x, mean, std):
     x = np.swapaxes(x, 0, 1)
 
     return x
-
-###############################################################
-    
-def from_np_to_01(imnp):
-    im01 = inv_tf(imnp.cpu().numpy().squeeze(), mean, std)
-    im01= np.transpose(im01, (2, 0, 1))
-    return im01
-
-###############################################################
-def topk_3D (grad, k):   
-    
-    
-    grad_flatten = grad.cpu().numpy().reshape(-1)
-    grad_flatten_torch = torch.tensor(grad_flatten)
-    topk, indices = torch.topk(torch.abs(grad_flatten_torch), k)
-    #grad_k_flatten = torch.zeros([2*4*3])
-
-    grad_k_flatten = torch.zeros([224*224*3])
-
-    for ind in indices:
-        
-        grad_k_flatten[ind] = grad_flatten[ind] + 0
-
-    grad_k_flatten_np = grad_k_flatten.cpu().numpy()
-    
-    #grad_k_3D_np = np.reshape(grad_k_flatten_np, ( 3, 2, 4))
-
-    grad_k_3D_np = np.reshape(grad_k_flatten_np, ( 3, 224, 224))
-
-    grad_3D_torch = torch.tensor(grad_k_3D_np)
-    grad_3D_sign = torch.sign(grad_3D_torch)
-
-
-    return grad_3D_sign
 
 ###############################################################
 
@@ -571,10 +542,6 @@ else:
     label_boundary = torch.argmax(net.forward(Variable(x_boundary, requires_grad=True)).data).item()
     
     query_rnd = query_binsearch_2
-    
-
-
-
 
     ###################################
     # Run over iterations
@@ -600,164 +567,7 @@ else:
     x_opt_inverse = inv_tf(x_adv.cpu().numpy()[0,:,:,:].squeeze(), mean, std)
     norm_inv_opt = linalg.norm(x_opt_inverse-image_fb)
     save_results(logs)
-
-
-    
-    
-    
-    
-    # Sparse GeoDA
-
-    list_coeff = np.linspace(0, 12, 36)
-
-    jj = 1
-    if dist == 'l1':
-         
-       
-        for delt in list_coeff:
-
-            current_pointer = 3*224*224
-            grad_l2 = gradient[0,:,:,:]/torch.norm(gradient[0,:,:,:])
-            k = 10
-            mid = 0
-            mint = 0
-            maxt = 3*224*224
-            dist = norm_inv_opt
-
-            multip = delt/np.sqrt(dist)
-            for q_ind in range(20):
-    
-                mid = round((mint + maxt)/2)
-                
-                grad_sp = topk_3D(grad_l2, mid)
-                grad_sp = grad_sp[None, :,:,:].to(device)
-                image_perturbed = x_0 + 5*grad_sp
-                perturbed_clip = clip_image_values(image_perturbed, lb, ub)
-                
-                
-                pert = clip_image_values(100*grad_sp, lb, ub)
-
-                x_B = x_0 + multip*(x_adv-x_0/torch.norm(x_adv-x_0))         
-
-                grad_flatten = grad_l2.cpu().numpy().reshape(-1)
-                vec = perturbed_clip - x_B
-                vec_flatten = vec.cpu().numpy().reshape(-1)
-    
-                hyperplane = np.inner(grad_flatten,vec_flatten)
-
-
-                if hyperplane>0:
-                    maxt = mid+1
-                else:
-                    mint = mid-1
-                if maxt < 80:
-                    
-                    if is_adversarial(perturbed_clip, orig_label)==False:
-                        mid =maxt + int(maxt/2) + 2
-                        grad_sp = topk_3D(grad_l2, mid)
-                        grad_sp = grad_sp[None, :,:,:].to(device)
-                        image_perturbed = x_0 + 100*grad_sp
-                        perturbed_clip = clip_image_values(image_perturbed, lb, ub)
-                        
-                    break
-
-            if  is_adversarial(perturbed_clip, orig_label) ==True:
-                print('Sparse perturbation is found.')
-                break 
-                        
-
-    
-
-
-
-        
-        sparse_01 = inv_tf(perturbed_clip.cpu().numpy()[0,:,:,:].squeeze(), mean, std)
-        
-        adv_label = torch.argmax(net.forward(Variable(perturbed_clip, requires_grad=True)).data).item()
-        str_label_adv = get_label(labels[int(adv_label)].split(',')[0])
-         
-        np.count_nonzero(abs(sparse_01-image_fb))
-        np.count_nonzero(abs((x_0-perturbed_clip).cpu().numpy()))
-        test = sparse_01-image_fb
-        test_torch = torch.tensor(test).to(device)
-        grad_sp = topk_3D(test_torch, 1908)
-        grad_sp_np = grad_sp.cpu().numpy()
-        
-        
-        ff = pert.cpu().numpy()   
-        
-        x = np.swapaxes(ff[0,:,:,:], 0, 2)
-        x = np.swapaxes(x, 0, 1)
-        np.count_nonzero(x)
-        
-        
-        fig, axes = plt.subplots(1, 3,figsize=(16,16))
-    
-    
-        axes[0].imshow(image_fb)
-        axes[1].imshow(x)
-    
-        axes[2].imshow(sparse_01)
-        
-
-        axes[0].set_title('original image: ' + str_label_orig, fontsize=16)
-        axes[2].set_title('perturbed: ' + str_label_adv, fontsize=16)
-        axes[1].set_title('perturbation: l_1  (sparse)', fontsize=16)
-        
-        axes[0].axis('off')
-        axes[1].axis('off')
-        axes[2].axis('off')
-
-         
-        
                
     print('#################################################################')
     print('End: The GeoDA algorithm' + message + qmessage )
     print('#################################################################')
-           
-
-
-
-    if dist == 'l2' or dist == 'linf':
-        adv_label = torch.argmax(net.forward(Variable(x_adv, requires_grad=True)).data).item()
-        str_label_adv = get_label(labels[int(adv_label)].split(',')[0])
-    
-    
-    
-        pert_norm = abs(x_opt_inverse-image_fb)/np.linalg.norm(abs(x_opt_inverse-image_fb))
-    
-        pert_norm_abs = (x_opt_inverse-image_fb)/np.linalg.norm((x_opt_inverse-image_fb))
-        
-        pertimage = image_fb + 30*pert_norm_abs
-    
-        
-        fig, axes = plt.subplots(1, 4,figsize=(16,16))
-    
-    
-        axes[0].imshow(image_fb)
-        axes[1].imshow(x_opt_inverse)
-    
-        axes[3].imshow(pertimage)
-        axes[2].imshow(100*pert_norm)
-        
-        
-        
-        axes[0].set_title('original: ' + str_label_orig )
-        axes[2].set_title('magnified perturbation: $\ell_2$  subspace')
-        axes[3].set_title('image + magnified perturbation' )
-        axes[1].set_title('perturbed: ' + str_label_adv)
-        
-        axes[0].axis('off')
-        axes[1].axis('off')
-        axes[2].axis('off')
-        axes[3].axis('off')
-    
-        
-        
-        
-        plt.show()
-
-
-
-        
-
