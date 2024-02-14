@@ -290,7 +290,7 @@ def GeoDA(x_b, iteration, q_opt, q_num=0):
         t1 = time.time()
         random_vec_o = torch.randn(q_opt[i],3,224,224)
 
-        grad_oi, ratios = black_grad_batch(x_b, q_opt[i], sigma, random_vec_o, grad_estimator_batch_size , orig_label)
+        grad_oi, ratios = black_grad_batch(x_b + sigma*(x_b-x_0)/torch.norm(x_b-x_0), q_opt[i], sigma, random_vec_o, grad_estimator_batch_size , orig_label)
         q_num = q_num + q_opt[i]
         grad = grad_oi + grad
         x_adv, qs, eps = go_to_boundary(x_0, grad, x_b)
