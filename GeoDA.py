@@ -289,6 +289,7 @@ def GeoDA(x_b, iteration, q_opt, q_num=0):
     
     norms = []
     grad = 0
+    iteration=1
     logs = np.zeros((2, iteration+1))
     logs[0][0] = 0
     logs[1][0] = linalg.norm(inv_tf(x_b.cpu().numpy()[0,:,:,:].squeeze(), mean, std)-image_fb)
@@ -296,6 +297,7 @@ def GeoDA(x_b, iteration, q_opt, q_num=0):
     for i in range(iteration):
     
         t1 = time.time()
+        q_opt[0] = 1000
         random_vec_o = torch.randn(q_opt[i],3,224,224)
 
         grad_oi, ratios = black_grad_batch(x_b + args.over_s*sigma*(x_b-x_0)/torch.norm(x_b-x_0), q_opt[i], sigma, random_vec_o, grad_estimator_batch_size , orig_label)
@@ -307,7 +309,7 @@ def GeoDA(x_b, iteration, q_opt, q_num=0):
 
 
         q_num = q_num + bin_query
-        print(q_num)
+        # print(q_num)
 
         x_b = x_adv
         
@@ -324,9 +326,9 @@ def GeoDA(x_b, iteration, q_opt, q_num=0):
 
             norm_p = np.max(abs(x_adv_inv-image_fb))
         
-        if verbose_control == 'Yes':
-            message = ' (took {:.5f} seconds)'.format(t2 - t1)
-            print('iteration -> ' + str(i) + str(message) + '     -- ' + dp + ' norm is -> ' + str(norm_p))
+        # if verbose_control == 'Yes':
+        #     message = ' (took {:.5f} seconds)'.format(t2 - t1)
+        #     print('iteration -> ' + str(i) + str(message) + '     -- ' + dp + ' norm is -> ' + str(norm_p))
 
         logs[0][i+1] = q_num
         logs[1][i+1] = norm_p
@@ -404,11 +406,11 @@ class SubNoise(nn.Module):
         return r_list
 ###############################################################
 if search_space == 'sub':
-    print('Check if DCT basis available ...')
+    # print('Check if DCT basis available ...')
     
     path = os.path.join(os.path.dirname(__file__), '2d_dct_basis_{}.npy'.format(sub_dim))
     if os.path.exists(path):
-        print('Yes, we already have it ...')
+        # print('Yes, we already have it ...')
         sub_basis = np.load('2d_dct_basis_{}.npy'.format(sub_dim)).astype(np.float32)
     else:
         print('Generating dct basis ......')
@@ -561,9 +563,9 @@ else:
     q_opt_iter, iterate = opt_query_iteration(q_opt_it, iteration, mu )
     q_opt_it = int(Q_max  - (iterate)*25)
     q_opt_iter, iterate = opt_query_iteration(q_opt_it, iteration, mu )
-    print('#################################################################')
-    print('Start: The GeoDA will be run for:' + ' Iterations = ' + str(iterate) + ', Query = ' + str(Q_max) + ', Norm = ' + str(dist)+ ', Space = ' + str(search_space) )
-    print('#################################################################')
+    # print('#################################################################')
+    # print('Start: The GeoDA will be run for:' + ' Iterations = ' + str(iterate) + ', Query = ' + str(Q_max) + ', Norm = ' + str(dist)+ ', Space = ' + str(search_space) )
+    # print('#################################################################')
 
 
     t3 = time.time()
@@ -576,6 +578,6 @@ else:
     norm_inv_opt = linalg.norm(x_opt_inverse-image_fb)
     save_results(logs)
                
-    print('#################################################################')
-    print('End: The GeoDA algorithm' + message + qmessage )
-    print('#################################################################')
+    # print('#################################################################')
+    # print('End: The GeoDA algorithm' + message + qmessage )
+    # print('#################################################################')
