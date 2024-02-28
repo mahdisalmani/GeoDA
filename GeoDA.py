@@ -241,6 +241,8 @@ def black_grad_batch(x_boundary, q_max, sigma, random_noises, batch_size, origin
         else:
             z.append(-1)
             grad_tmp.append(-all_noise[i])
+
+    print("Param P: ", (sum(z)+len(z))/(2*len(z)))
     
     grad = -(1/q_max)*sum(grad_tmp)
     
